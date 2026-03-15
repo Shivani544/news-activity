@@ -1,0 +1,52 @@
+{
+  "source_file": "milestone3_output.csv",
+  "trained_at_utc": "2026-03-06T13:50:19Z",
+  "train_size": 25,
+  "test_size": 3,
+  "labels": [
+    "Negative",
+    "Neutral",
+    "Positive"
+  ],
+  "accuracy": 1.0,
+  "f1_macro": 1.0,
+  "accuracy_pct": 100.0,
+  "f1_macro_pct": 100.0,
+  "classification_report": {
+    "Negative": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 1.0
+    },
+    "Neutral": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 1.0
+    },
+    "Positive": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 1.0
+    },
+    "accuracy": 1.0,
+    "macro avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 3.0
+    },
+    "weighted avg": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 3.0
+    }
+  },
+  "model_path": "C:\\Users\\HP\\OneDrive\\Desktop\\news activity\\models\\sentiment_model.joblib",
+  "feature_mode": "tfidf_plus_sentiment_score",
+  "test_split_ratio": 0.1,
+  "split_random_state": 6
+}

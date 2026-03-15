@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsPulse Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.3/src/wordcloud2.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-soft: #f4f8fb;
+            --bg-accent: #deebf5;
+            --card: #ffffff;
+            --text-main: #122033;
+            --text-muted: #45607d;
+            --line: #d8e4ef;
+            --primary: #0f5ac7;
+            --primary-strong: #0a4597;
+            --danger: #c62f2f;
+            --success: #16995f;
+            --shadow: 0 10px 26px rgba(12, 49, 93, 0.08);
+        }
+
+        body {
+            margin: 0;
+            padding: 26px;
+            font-family: 'Sora', sans-serif;
+            background:
+                radial-gradient(circle at 92% 8%, rgba(15, 90, 199, 0.14), transparent 28%),
+                radial-gradient(circle at 12% 88%, rgba(10, 148, 129, 0.12), transparent 30%),
+                linear-gradient(160deg, var(--bg-soft) 0%, var(--bg-accent) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .wrapper {
+            max-width: 1360px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            gap: 14px;
+            flex-wrap: wrap;
+            background: rgba(255, 255, 255, 0.78);
+            border: 1px solid rgba(216, 228, 239, 0.95);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(8px);
+            border-radius: 18px;
+            padding: 18px 20px;
+            animation: riseIn 0.55s ease both;
+        }
+
+        .topbar h2 {
+            margin: 0;
+            font-size: clamp(26px, 3vw, 34px);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .topbar p {
+            margin: 6px 0 0;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+        }
+
+        .topbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+            box-shadow: 0 7px 16px rgba(17, 24, 39, 0.16);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.95;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, #0d77ba 100%);
+            color: #fff;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, var(--danger) 0%, #a02222 100%);
+            color: #fff;
+        }
+
+        .flash-container {
+            margin-bottom: 14px;
+        }
+
+        .flash {
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+            animation: riseIn 0.45s ease both;
+        }
+
+        .flash.error {
+            background: #fff1f1;
+            border: 1px solid #f6c6c6;
+            color: #9b1f1f;
+        }
+
+        .flash.success {
+            background: #eafcf3;
+            border: 1px solid #bbedd1;
+            color: #156344;
+        }
+
+        .pulse-strip {
+            margin-bottom: 20px;
+            border-radius: 20px;
+            border: 1px solid #d5e4f1;
+            background: linear-gradient(145deg, #f7fcff 0%, #edf5fb 56%, #e6f0f8 100%);
+            box-shadow: var(--shadow);
+            padding: 14px;
+            animation: riseIn 0.55s ease both;
+            animation-delay: 0.06s;
+        }
+
+        .pulse-grid {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .pulse-card {
+            padding: 16px;
+            border-radius: 14px;
+            background: #ffffff;
+            border: 1px solid #d9e6f2;
+            box-shadow: 0 6px 15px rgba(12, 49, 93, 0.05);
+        }
+
+        .pulse-label {
+            color: #17498b;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+        }
+
+        .pulse-value {
+            color: var(--primary);
+            font-size: clamp(30px, 3vw, 42px);
+            line-height: 1;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.03em;
+        }
+
+        .pulse-sub {
+            color: #496684;
+            font-size: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+        }
+
+        .section-title {
+            margin: 4px 0 12px;
+            font-size: 20px;
+            color: #143a68;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .trending-news-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+
+        .trending-news-card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            animation: riseIn 0.55s ease both;
+        }
+
+        .trending-image-wrap {
+            position: relative;
+            height: 170px;
+            overflow: hidden;
+            background: #e9f1f8;
+        }
+
+        .trending-image-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .trending-topic-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            border-radius: 999px;
+            padding: 4px 8px;
+            font-size: 10px;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.92);
+            color: #144f95;
+            border: 1px solid #c8dcf2;
+        }
+
+        .trending-news-body {
+            padding: 12px;
+        }
+
+        .trending-headline {
+            margin: 0 0 10px;
+            color: #123a66;
+            font-size: 14px;
+            line-height: 1.35;
+            font-weight: 700;
+            min-height: 58px;
+        }
+
+        .trending-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            color: #5b748d;
+            font-size: 11px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+            animation: riseIn 0.6s ease both;
+        }
+
+        .card h3 {
+            margin: 0 0 12px;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: #122f52;
+        }
+
+        .canvas-wrap {
+            height: 320px;
+        }
+
+        .keywords-wrap {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .keyword-chip {
+            background: linear-gradient(145deg, #e3f2ff 0%, #d6f4ee 100%);
+            color: #15497c;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            border: 1px solid #cce2f3;
+        }
+
+        .topic-signal-wrap {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .topic-signal {
+            border: 1px solid #d6e6f3;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #fafdff 0%, #edf5fb 100%);
+            padding: 10px;
+        }
+
+        .topic-signal-title {
+            margin: 0 0 6px;
+            color: #123a66;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .topic-signal-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            color: #4f6a84;
+            font-size: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+        }
+
+        .trend-chip {
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 10px;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+        }
+
+        .trend-chip.up {
+            color: #0f6d44;
+            background: #e8f8f0;
+            border: 1px solid #bde6ce;
+        }
+
+        .trend-chip.down {
+            color: #8a2323;
+            background: #fff1f1;
+            border: 1px solid #f2c8c8;
+        }
+
+        .dataset-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .dataset {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .dataset h4 {
+            margin: 0;
+            font-size: 16px;
+        }
+
+        .meta {
+            margin: 6px 0 10px;
+            font-size: 13px;
+            color: #57708a;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid #d7e5f1;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #e8f1f7;
+            font-size: 13px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f0f7fc;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            color: #2a4f75;
+            letter-spacing: 0.02em;
+        }
+
+        .empty {
+            color: #aa2727;
+            font-size: 14px;
+            margin-top: 6px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+        }
+
+        .latest-news-table {
+            min-width: 540px;
+        }
+
+        .headline-cell {
+            max-width: 460px;
+            color: #1b3f64;
+            font-weight: 600;
+        }
+
+        .sentiment-tag {
+            font-weight: 700;
+        }
+
+        .sentiment-positive {
+            color: #16a34a;
+        }
+
+        .sentiment-negative {
+            color: #dc2626;
+        }
+
+        .sentiment-neutral {
+            color: #ca8a04;
+        }
+
+        .sentiment-unknown {
+            color: #6b7280;
+        }
+
+        .wordcloud-wrap {
+            height: 320px;
+            border: 1px solid #d5e4f0;
+            border-radius: 12px;
+            background: linear-gradient(155deg, #f4fbff 0%, #edf7f4 100%);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #wordCloudCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .charts-grid .card:nth-child(1) { animation-delay: 0.08s; }
+        .charts-grid .card:nth-child(2) { animation-delay: 0.12s; }
+        .charts-grid .card:nth-child(3) { animation-delay: 0.16s; }
+        .dataset-grid .card:nth-child(1) { animation-delay: 0.2s; }
+        .dataset-grid .card:nth-child(2) { animation-delay: 0.24s; }
+
+        @keyframes riseIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .topbar,
+            .pulse-strip,
+            .card,
+            .flash {
+                animation: none;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .pulse-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+
+            .trending-news-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .pulse-card {
+                padding: 14px;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dataset-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .topic-signal-wrap {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 820px) {
+            .pulse-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 14px;
+            }
+
+            .trending-news-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pulse-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pulse-value {
+                font-size: 34px;
+            }
+
+            .canvas-wrap {
+                height: 280px;
+            }
+
+            .wordcloud-wrap {
+                height: 260px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="topbar">
+            <div>
+                <h2>Welcome, {{ username }}</h2>
+                <p>Dashboard | Data timestamp: {{ generated_at }}</p>
+            </div>
+            <div class="topbar-actions">
+                <form action="{{ url_for('refresh_data') }}" method="POST" style="margin: 0;">
+                    <button type="submit" class="action-btn refresh-btn">Refresh Data</button>
+                </form>
+                <a class="action-btn logout-btn" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <h3 class="section-title">Top Trending News</h3>
+        {% if dashboard_analytics.trending_news %}
+            <section class="trending-news-grid">
+                {% for article in dashboard_analytics.trending_news %}
+                    <article class="trending-news-card">
+                        <div class="trending-image-wrap">
+                            <img src="{{ article.image_url }}" alt="{{ article.headline }}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://placehold.co/640x360/e6eef8/1f4f7f?text=News';">
+                            <span class="trending-topic-badge">{{ article.topic }}</span>
+                        </div>
+                        <div class="trending-news-body">
+                            <p class="trending-headline">{{ article.headline }}</p>
+                            <div class="trending-meta">
+                                <span>{{ article.source }}</span>
+                                <span class="sentiment-tag sentiment-{{ article.sentiment|lower }}">{{ article.sentiment }}</span>
+                            </div>
+                            <div class="trending-meta" style="margin-top: 6px; justify-content: flex-end;">
+                                <span>{{ article.date }}</span>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </section>
+        {% else %}
+            <p class="empty" style="margin-bottom: 20px;">No trending news available right now.</p>
+        {% endif %}
+
+        <h3 class="section-title">Live Snapshot</h3>
+        <section class="pulse-strip">
+            <div class="pulse-grid">
+                <div class="pulse-card">
+                    <div class="pulse-label">Total Articles</div>
+                    <div class="pulse-value">{{ dashboard_analytics.stats.total_articles }}</div>
+                    <div class="pulse-sub">Latest data date: {{ dashboard_analytics.stats.latest_date }}</div>
+                </div>
+                <div class="pulse-card">
+                    <div class="pulse-label">Unique Sources</div>
+                    <div class="pulse-value">{{ dashboard_analytics.stats.unique_sources }}</div>
+                    <div class="pulse-sub">Distinct publishers in dataset</div>
+                </div>
+                <div class="pulse-card">
+                    <div class="pulse-label">Avg Words</div>
+                    <div class="pulse-value">{{ '%.1f'|format(dashboard_analytics.stats.avg_words) }}</div>
+                    <div class="pulse-sub">Per article from processed text</div>
+                </div>
+                <div class="pulse-card">
+                    <div class="pulse-label">Positive %</div>
+                    <div class="pulse-value">{{ '%.1f'|format(dashboard_analytics.stats.positive_percentage) }}%</div>
+                    <div class="pulse-sub">Share of Positive sentiment labels</div>
+                </div>
+                <div class="pulse-card">
+                    <div class="pulse-label">Model Accuracy</div>
+                    {% if dashboard_analytics.stats.model_accuracy is not none %}
+                        <div class="pulse-value">{{ '%.1f'|format(dashboard_analytics.stats.model_accuracy) }}%</div>
+                        {% if dashboard_analytics.stats.model_f1_macro is not none %}
+                            <div class="pulse-sub">Holdout test set | F1-macro: {{ '%.1f'|format(dashboard_analytics.stats.model_f1_macro) }}%</div>
+                        {% else %}
+                            <div class="pulse-sub">Holdout test set performance</div>
+                        {% endif %}
+                    {% else %}
+                        <div class="pulse-value">N/A</div>
+                        <div class="pulse-sub">Run train_sentiment_model.py</div>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <h3 class="section-title">Sentiment Analysis</h3>
+        <section class="charts-grid">
+            <div class="card">
+                <h3>Top Sources</h3>
+                <div class="canvas-wrap"><canvas id="sourcesChart"></canvas></div>
+            </div>
+
+            <div class="card">
+                <h3>Sentiment Distribution</h3>
+                <div class="canvas-wrap"><canvas id="sentimentChart"></canvas></div>
+            </div>
+
+            <div class="card">
+                <h3>Articles by Date</h3>
+                <div class="canvas-wrap"><canvas id="timelineChart"></canvas></div>
+            </div>
+        </section>
+
+        <section class="card" style="margin-bottom: 20px;">
+            <h3>Top Trending Keywords</h3>
+            {% if dashboard_analytics.top_keywords %}
+                <div class="keywords-wrap">
+                    {% for keyword in dashboard_analytics.top_keywords %}
+                        <span class="keyword-chip">{{ keyword }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty">No keywords available. Run NLP pipeline to generate processed text.</p>
+            {% endif %}
+        </section>
+
+        <h3 class="section-title">Topic Modeling</h3>
+        <section class="dataset-grid" style="margin-top: 0; margin-bottom: 16px;">
+            <div class="card">
+                <h3>Topic Distribution</h3>
+                <div class="canvas-wrap"><canvas id="topicModelChart"></canvas></div>
+            </div>
+
+            <div class="card">
+                <h3>Topic Trend by Date</h3>
+                <div class="canvas-wrap"><canvas id="topicTrendChart"></canvas></div>
+            </div>
+        </section>
+
+        <section class="card" style="margin-bottom: 20px;">
+            <h3>Top Topic Signals</h3>
+            {% if dashboard_analytics.trending_topics %}
+                <div class="topic-signal-wrap">
+                    {% for item in dashboard_analytics.trending_topics[:8] %}
+                        <article class="topic-signal">
+                            <p class="topic-signal-title">{{ item.title }}</p>
+                            <div class="topic-signal-meta">
+                                <span>Mentions: {{ item.mentions }}</span>
+                                <span class="trend-chip {{ 'up' if item.trend_score >= 0 else 'down' }}">
+                                    {{ '↑' if item.trend_score >= 0 else '↓' }} {{ '%.1f'|format(item.trend_score|abs) }}%
+                                </span>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="empty">No topic modeling data available.</p>
+            {% endif %}
+        </section>
+
+        <h3 class="section-title">News Feed</h3>
+        <section class="dataset-grid" style="margin-top: 0; margin-bottom: 20px;">
+            <div class="card">
+                <h3>Keyword Frequency</h3>
+                <div class="canvas-wrap"><canvas id="keywordFrequencyChart"></canvas></div>
+            </div>
+
+            <div class="card">
+                <h3>Latest News</h3>
+                {% if dashboard_analytics.latest_news %}
+                    <div class="table-wrap">
+                        <table class="latest-news-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Headline</th>
+                                    <th>Topic</th>
+                                    <th>Sentiment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in dashboard_analytics.latest_news %}
+                                    <tr>
+                                        <td>{{ row.date }}</td>
+                                        <td class="headline-cell">{{ row.headline }}</td>
+                                        <td>{{ row.topic }}</td>
+                                        <td class="sentiment-tag sentiment-{{ row.sentiment|lower }}">{{ row.sentiment }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="empty">No recent news found.</p>
+                {% endif %}
+            </div>
+        </section>
+
+        <section class="card" style="margin-bottom: 20px;">
+            <h3>Word Cloud</h3>
+            <div class="wordcloud-wrap">
+                <canvas id="wordCloudCanvas" width="1200" height="520"></canvas>
+            </div>
+        </section>
+    </div>
+
+    <script id="dashboardData" type="application/json">{{ dashboard_analytics | tojson }}</script>
+    <script>
+        const dashboardData = JSON.parse(document.getElementById('dashboardData').textContent);
+        const sourcesData = dashboardData.sources_chart;
+        const sentimentData = dashboardData.sentiment_chart;
+        const timelineData = dashboardData.timeline_chart;
+        const topicModelData = dashboardData.topic_chart || { labels: [], values: [] };
+        const topicTrendData = dashboardData.topic_line_chart || { labels: [], datasets: [] };
+        const keywordFrequencyData = dashboardData.keyword_chart || { labels: [], values: [] };
+        const keywordCloudData = dashboardData.keyword_cloud || [];
+
+        const commonOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#374151'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: { color: '#6b7280' },
+                    grid: { color: '#eef2f7' }
+                },
+                y: {
+                    ticks: { color: '#6b7280' },
+                    grid: { color: '#eef2f7' },
+                    beginAtZero: true
+                }
+            }
+        };
+
+        new Chart(document.getElementById('sourcesChart'), {
+            type: 'bar',
+            data: {
+                labels: sourcesData.labels,
+                datasets: [{
+                    label: 'Articles',
+                    data: sourcesData.values,
+                    backgroundColor: '#3b82f6'
+                }]
+            },
+            options: commonOptions
+        });
+
+        new Chart(document.getElementById('sentimentChart'), {
+            type: 'doughnut',
+            data: {
+                labels: sentimentData.labels,
+                datasets: [{
+                    data: sentimentData.values,
+                    backgroundColor: ['#22c55e', '#f59e0b', '#ef4444', '#9ca3af']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('timelineChart'), {
+            type: 'line',
+            data: {
+                labels: timelineData.labels,
+                datasets: [{
+                    label: 'Articles per day',
+                    data: timelineData.values,
+                    borderColor: '#0f766e',
+                    backgroundColor: 'rgba(15, 118, 110, 0.16)',
+                    tension: 0.2,
+                    fill: true
+                }]
+            },
+            options: commonOptions
+        });
+
+        const keywordChartCanvas = document.getElementById('keywordFrequencyChart');
+        if (keywordChartCanvas) {
+            const keywordBarColors = ['#16a34a', '#dc2626', '#f59e0b', '#fb923c', '#0ea5e9', '#8b5cf6'];
+            new Chart(keywordChartCanvas, {
+                type: 'bar',
+                data: {
+                    labels: keywordFrequencyData.labels,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: keywordFrequencyData.values,
+                        backgroundColor: keywordFrequencyData.values.map((_, index) => keywordBarColors[index % keywordBarColors.length]),
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        const topicModelCanvas = document.getElementById('topicModelChart');
+        if (topicModelCanvas) {
+            new Chart(topicModelCanvas, {
+                type: 'bar',
+                data: {
+                    labels: topicModelData.labels,
+                    datasets: [{
+                        label: 'Articles',
+                        data: topicModelData.values,
+                        backgroundColor: ['#2f68d8', '#16a34a', '#f59e0b', '#dc2626', '#0ea5e9', '#8b5cf6', '#ef4444', '#14b8a6']
+                    }]
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        const topicTrendCanvas = document.getElementById('topicTrendChart');
+        if (topicTrendCanvas) {
+            new Chart(topicTrendCanvas, {
+                type: 'line',
+                data: {
+                    labels: topicTrendData.labels,
+                    datasets: (topicTrendData.datasets || []).map((dataset) => ({
+                        ...dataset,
+                        fill: false,
+                        pointRadius: 2,
+                        borderWidth: 2
+                    }))
+                },
+                options: {
+                    ...commonOptions,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        const wordCloudCanvas = document.getElementById('wordCloudCanvas');
+        if (wordCloudCanvas && window.WordCloud && keywordCloudData.length) {
+            WordCloud(wordCloudCanvas, {
+                list: keywordCloudData,
+                gridSize: Math.max(8, Math.round(wordCloudCanvas.width / 80)),
+                weightFactor: (size) => Math.max(12, size * 2.6),
+                fontFamily: 'Sora, sans-serif',
+                color: () => {
+                    const palette = ['#0f5ac7', '#0f766e', '#b45309', '#c62f2f', '#1e3a5f', '#226d9b'];
+                    return palette[Math.floor(Math.random() * palette.length)];
+                },
+                backgroundColor: '#f4fbff',
+                rotateRatio: 0.22,
+                minRotation: -0.6,
+                maxRotation: 0.6,
+                shuffle: true,
+                drawOutOfBound: false,
+            });
+        }
+    </script>
+</body>
+</html>

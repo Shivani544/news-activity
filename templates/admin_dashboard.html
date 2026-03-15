@@ -1,0 +1,1894 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsPulse Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.3/src/wordcloud2.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+
+        :root {
+            --sidebar-bg: #020f2b;
+            --sidebar-line: rgba(117, 157, 229, 0.24);
+            --sidebar-text: #d8e7ff;
+            --sidebar-muted: #88a7d6;
+            --sidebar-active: #37b6ff;
+            --bg-main: #f5f8fc;
+            --bg-accent: #e8f0f9;
+            --card: #ffffff;
+            --line: #d8e4ef;
+            --text-main: #132238;
+            --text-muted: #4f6782;
+            --primary: #0f5ac7;
+            --danger: #c62f2f;
+            --success: #179e63;
+            --warn: #b98514;
+            --shadow: 0 14px 28px rgba(11, 44, 83, 0.08);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Sora', sans-serif;
+            color: var(--text-main);
+            background:
+                radial-gradient(circle at 90% 10%, rgba(15, 90, 199, 0.14), transparent 28%),
+                radial-gradient(circle at 8% 88%, rgba(17, 149, 122, 0.12), transparent 30%),
+                linear-gradient(155deg, var(--bg-main) 0%, var(--bg-accent) 100%);
+            min-height: 100vh;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 272px minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            border-right: 1px solid var(--sidebar-line);
+            background:
+                radial-gradient(circle at 15% 8%, rgba(55, 182, 255, 0.22), transparent 30%),
+                linear-gradient(175deg, #041436 0%, #020d26 54%, #010919 100%);
+            color: var(--sidebar-text);
+            padding: 24px 16px 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            box-shadow: 10px 0 30px rgba(2, 12, 40, 0.42);
+            z-index: 10;
+        }
+
+        .brand {
+            padding: 6px 10px 14px;
+            border-bottom: 1px solid rgba(114, 156, 229, 0.22);
+        }
+
+        .logo-mark {
+            font-size: 20px;
+            color: var(--sidebar-active);
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+
+        .brand-title {
+            margin: 0;
+            font-size: 36px;
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+            color: #43bcff;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .brand-sub {
+            margin: 10px 0 0;
+            color: #b9cbe9;
+            font-family: 'Manrope', sans-serif;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            line-height: 1.45;
+            font-weight: 800;
+        }
+
+        .nav-toggle {
+            display: none;
+            border: 1px solid rgba(120, 170, 248, 0.4);
+            border-radius: 999px;
+            background: rgba(8, 25, 58, 0.78);
+            color: #d7e8ff;
+            padding: 9px 14px;
+            font-size: 12px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .nav {
+            overflow-y: auto;
+            padding-right: 2px;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            border: none;
+            text-decoration: none;
+            color: var(--sidebar-text);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(68, 127, 223, 0.22);
+            transform: translateX(2px);
+        }
+
+        .nav-link.active {
+            color: #eff7ff;
+            background: linear-gradient(120deg, rgba(42, 119, 255, 0.36), rgba(42, 173, 255, 0.2));
+            box-shadow: inset 0 0 0 1px rgba(99, 183, 255, 0.35);
+        }
+
+        .nav-dot {
+            width: 11px;
+            height: 11px;
+            border-radius: 999px;
+            border: 1px solid rgba(177, 204, 245, 0.6);
+            background: rgba(43, 64, 99, 0.64);
+            flex-shrink: 0;
+        }
+
+        .nav-link.active .nav-dot {
+            border-color: rgba(245, 251, 255, 0.9);
+            background: radial-gradient(circle at 40% 35%, #ff8368 0%, #ff4f43 70%);
+            box-shadow: 0 0 0 3px rgba(255, 79, 67, 0.16);
+        }
+
+        .sidebar-actions {
+            margin-top: auto;
+            border-top: 1px solid rgba(114, 156, 229, 0.22);
+            padding: 12px 8px 0;
+            display: grid;
+            gap: 8px;
+        }
+
+        .sidebar-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 13px;
+            font-size: 12px;
+            text-align: center;
+            cursor: pointer;
+            text-decoration: none;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            color: #fff;
+        }
+
+        .sidebar-btn.refresh {
+            background: linear-gradient(135deg, #0f5ac7 0%, #0b8cb5 100%);
+        }
+
+        .sidebar-btn.logout {
+            background: linear-gradient(135deg, #be3434 0%, #8f2323 100%);
+        }
+
+        .main {
+            padding: 22px;
+            min-width: 0;
+        }
+
+        .topbar {
+            background: rgba(255, 255, 255, 0.82);
+            border: 1px solid rgba(216, 228, 239, 0.95);
+            border-radius: 18px;
+            padding: 16px 18px;
+            box-shadow: var(--shadow);
+            margin-bottom: 14px;
+        }
+
+        .topbar h1 {
+            margin: 0;
+            font-size: clamp(24px, 2.8vw, 34px);
+            letter-spacing: -0.03em;
+        }
+
+        .topbar p {
+            margin: 7px 0 0;
+            color: var(--text-muted);
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .flash {
+            border-radius: 12px;
+            padding: 12px 14px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+            border: 1px solid transparent;
+        }
+
+        .flash.error {
+            background: #fff1f1;
+            border-color: #f6c6c6;
+            color: #9b1f1f;
+        }
+
+        .flash.success {
+            background: #eafcf3;
+            border-color: #bbedd1;
+            color: #156344;
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: var(--shadow);
+            margin-bottom: 16px;
+            scroll-margin-top: 16px;
+        }
+
+        .panel h2 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+            color: #123053;
+        }
+
+        .meta {
+            margin: 8px 0 0;
+            color: #57708a;
+            font-size: 13px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+        }
+
+        .overview-grid {
+            margin-top: 14px;
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .kpi {
+            border: 1px solid #d7e7f2;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #fafdff 0%, #edf5fb 100%);
+            padding: 14px;
+        }
+
+        .kpi-label {
+            color: #17498b;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 7px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+        }
+
+        .kpi-value {
+            color: #0d3f89;
+            font-size: clamp(25px, 2.2vw, 34px);
+            line-height: 1;
+            letter-spacing: -0.03em;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .kpi-sub {
+            color: #4a667f;
+            font-size: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+        }
+
+        .overview-health {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 12px;
+        }
+
+        .health-card {
+            border: 1px solid #d7e7f2;
+            border-radius: 12px;
+            background: #fff;
+            padding: 12px;
+        }
+
+        .health-card h3 {
+            margin: 0 0 10px;
+            font-size: 16px;
+            color: #173a64;
+        }
+
+        .metric-bars {
+            display: grid;
+            gap: 10px;
+        }
+
+        .metric-row {
+            display: grid;
+            gap: 6px;
+        }
+
+        .metric-row-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            color: #2e5277;
+            font-size: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+        }
+
+        .metric-track {
+            height: 8px;
+            border-radius: 999px;
+            background: #e7eef6;
+            overflow: hidden;
+        }
+
+        .metric-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
+
+        .metric-fill.positive { background: linear-gradient(90deg, #22c55e 0%, #17a34a 100%); }
+        .metric-fill.confidence { background: linear-gradient(90deg, #2f68d8 0%, #1f66bd 100%); }
+        .metric-fill.impact { background: linear-gradient(90deg, #f59e0b 0%, #d07f11 100%); }
+        .metric-fill.volume { background: linear-gradient(90deg, #0ea5a0 0%, #0b7f87 100%); }
+
+        .quick-keywords {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-content: flex-start;
+        }
+
+        .quick-keywords .keyword-chip {
+            font-size: 11px;
+            padding: 5px 10px;
+        }
+
+        .overview-charts {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .overview-main {
+            grid-column: 1 / -1;
+        }
+
+        .overview-main .canvas-wrap {
+            height: 360px;
+        }
+
+        .overview-topic {
+            grid-column: 1 / -1;
+        }
+
+        .chart-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .chart-head h3 {
+            margin: 0;
+        }
+
+        .chart-switcher {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f1f7fd;
+            border: 1px solid #d5e4f2;
+            border-radius: 999px;
+            padding: 4px;
+        }
+
+        .overview-switch-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 6px 10px;
+            background: transparent;
+            color: #426486;
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .overview-switch-btn.active {
+            color: #fff;
+            background: linear-gradient(135deg, #2f68d8 0%, #1f66bd 100%);
+        }
+
+        .milestone-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .milestone-card {
+            border: 1px solid #d7e7f2;
+            border-radius: 14px;
+            background: #fff;
+            padding: 14px;
+        }
+
+        .milestone-tag {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            background: #e9f2ff;
+            color: #1453a7;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .milestone-card h3 {
+            margin: 0 0 6px;
+            font-size: 17px;
+            color: #173a64;
+        }
+
+        .dataset-card {
+            margin-top: 10px;
+            border: 1px solid #e2ecf5;
+            border-radius: 12px;
+            background: #fdfefe;
+            padding: 10px;
+        }
+
+        details.dataset-card {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        details.dataset-card summary {
+            cursor: pointer;
+            list-style: none;
+            padding: 10px;
+        }
+
+        details.dataset-card summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .dataset-summary-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .dataset-open-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: #19589f;
+            border: 1px solid #c5daf0;
+            border-radius: 999px;
+            padding: 4px 9px;
+            background: #eef6ff;
+            min-width: 76px;
+        }
+
+        details.dataset-card[open] .dataset-open-label {
+            color: #0f6b4d;
+            border-color: #bbdfcf;
+            background: #eafcf3;
+        }
+
+        .dataset-body {
+            border-top: 1px solid #e2ecf5;
+            padding: 0 10px 10px;
+        }
+
+        .dataset-preview {
+            margin-top: 10px;
+            max-height: 220px;
+            overflow: auto;
+        }
+
+        .dataset-card h4 {
+            margin: 0;
+            font-size: 14px;
+            color: #1e4f86;
+        }
+
+        .dataset-meta {
+            margin: 5px 0 9px;
+            color: #62809c;
+            font-size: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+        }
+
+        .charts-grid {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .chart-card {
+            border: 1px solid #d7e7f2;
+            border-radius: 12px;
+            background: #fff;
+            padding: 12px;
+        }
+
+        .chart-card h3 {
+            margin: 0 0 10px;
+            font-size: 16px;
+            color: #173a64;
+        }
+
+        .canvas-wrap {
+            height: 300px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid #d7e5f1;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 640px;
+        }
+
+        .compact table {
+            min-width: 520px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #e8f1f7;
+            font-size: 12px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f0f7fc;
+            color: #2a4f75;
+            letter-spacing: 0.02em;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+        }
+
+        tbody tr:hover {
+            background: #f7fbff;
+        }
+
+        .keywords-wrap {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .keyword-chip {
+            background: linear-gradient(145deg, #e3f2ff 0%, #d6f4ee 100%);
+            color: #15497c;
+            border: 1px solid #cce2f3;
+            border-radius: 999px;
+            padding: 6px 11px;
+            font-size: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+        }
+
+        .wordcloud-wrap {
+            margin-top: 14px;
+            height: 340px;
+            border: 1px solid #d5e4f0;
+            border-radius: 12px;
+            background: linear-gradient(155deg, #f4fbff 0%, #edf7f4 100%);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #adminWordCloudCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .impact-grid {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: 240px minmax(0, 1fr);
+            gap: 14px;
+        }
+
+        .impact-score {
+            border: 1px solid #d7e7f2;
+            border-radius: 14px;
+            background: linear-gradient(155deg, #edf5ff 0%, #f3fbf8 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 14px;
+        }
+
+        .score-value {
+            font-size: clamp(40px, 4vw, 52px);
+            line-height: 1;
+            color: #0e4b98;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.04em;
+        }
+
+        .score-label {
+            color: #3f658b;
+            font-size: 13px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .impact-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        .impact-metrics .kpi {
+            padding: 12px;
+        }
+
+        .user-admin-grid {
+            margin-top: 14px;
+            display: grid;
+            grid-template-columns: 340px minmax(0, 1fr);
+            gap: 12px;
+        }
+
+        .user-card {
+            border: 1px solid #d7e7f2;
+            border-radius: 12px;
+            background: #fff;
+            padding: 12px;
+        }
+
+        .user-card h3 {
+            margin: 0;
+            font-size: 16px;
+            color: #173a64;
+        }
+
+        .field-grid {
+            margin-top: 10px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .field-grid input {
+            border: 1px solid #cfe0ee;
+            border-radius: 9px;
+            padding: 9px 10px;
+            font-size: 13px;
+            font-family: 'Sora', sans-serif;
+        }
+
+        .field-grid input:focus {
+            outline: none;
+            border-color: #72a7db;
+            box-shadow: 0 0 0 3px rgba(114, 167, 219, 0.2);
+        }
+
+        .inline-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .user-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            cursor: pointer;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .user-btn.create { background: linear-gradient(135deg, #0f5ac7 0%, #0d77ba 100%); }
+        .user-btn.generate { background: linear-gradient(135deg, #4d6a8f 0%, #3a506e 100%); }
+        .user-btn.reset { background: linear-gradient(135deg, #1c8c59 0%, #166f47 100%); }
+        .user-btn.delete { background: linear-gradient(135deg, #c62f2f 0%, #a02222 100%); }
+
+        .user-kpi-strip {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .user-kpi {
+            border: 1px solid #dceaf5;
+            border-radius: 10px;
+            background: #f8fcff;
+            padding: 9px;
+        }
+
+        .user-kpi .k {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #567596;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .user-kpi .v {
+            font-size: 22px;
+            line-height: 1;
+            color: #124c90;
+            font-weight: 800;
+        }
+
+        .search-wrap {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .search-wrap input {
+            min-width: 220px;
+            border: 1px solid #cfe0ee;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-family: 'Sora', sans-serif;
+        }
+
+        .hidden-row {
+            display: none;
+        }
+
+        .trend-positive { color: var(--success); font-weight: 700; }
+        .trend-negative { color: var(--danger); font-weight: 700; }
+
+        .sentiment-positive { color: var(--success); font-weight: 700; }
+        .sentiment-negative { color: var(--danger); font-weight: 700; }
+        .sentiment-neutral { color: var(--warn); font-weight: 700; }
+        .sentiment-unknown { color: #5f7489; font-weight: 700; }
+
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .mini-btn {
+            border: none;
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: 12px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+            color: #fff;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .mini-btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.95;
+        }
+
+        .edit-btn { background: linear-gradient(135deg, #0f5ac7 0%, #0d77ba 100%); }
+        .delete-btn { background: linear-gradient(135deg, #c62f2f 0%, #a02222 100%); }
+
+        .empty {
+            margin: 0;
+            color: #aa2727;
+            font-size: 14px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+        }
+
+        @media (max-width: 1200px) {
+            .overview-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .overview-health {
+                grid-template-columns: 1fr;
+            }
+
+            .impact-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 980px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: relative;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--sidebar-line);
+                box-shadow: 0 10px 25px rgba(2, 12, 40, 0.3);
+            }
+
+            .nav-toggle {
+                display: inline-flex;
+                align-self: flex-start;
+            }
+
+            .nav {
+                display: none;
+                max-height: 320px;
+            }
+
+            body.sidebar-open .nav {
+                display: block;
+            }
+
+            .sidebar-actions {
+                margin-top: 0;
+            }
+
+            .milestone-grid,
+            .charts-grid,
+            .overview-charts,
+            .overview-health,
+            .impact-metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .user-admin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .main {
+                padding: 14px;
+            }
+
+            .canvas-wrap {
+                height: 270px;
+            }
+
+            .overview-main .canvas-wrap {
+                height: 280px;
+            }
+
+            .wordcloud-wrap {
+                height: 270px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-mark">NP</div>
+                <h2 class="brand-title">NewsPulse</h2>
+                <p class="brand-sub">AI-POWERED NEWS<br>INTELLIGENCE</p>
+            </div>
+
+            <button id="navToggle" class="nav-toggle" type="button">Menu</button>
+
+            <nav class="nav" id="sidebarNav">
+                <a class="nav-link active" href="#overview"><span class="nav-dot"></span>Overview</a>
+                <a class="nav-link" href="#datasets"><span class="nav-dot"></span>Dataset</a>
+                <a class="nav-link" href="#trending-keywords"><span class="nav-dot"></span>Trending Keywords</a>
+                <a class="nav-link" href="#word-cloud"><span class="nav-dot"></span>Word Cloud</a>
+                <a class="nav-link" href="#topic-modeling"><span class="nav-dot"></span>Topic Modeling</a>
+                <a class="nav-link" href="#sentiment-analysis"><span class="nav-dot"></span>Sentiment Analysis</a>
+                <a class="nav-link" href="#impact-level"><span class="nav-dot"></span>Impact Level</a>
+                <a class="nav-link" href="#user-management"><span class="nav-dot"></span>User Management</a>
+                <a class="nav-link" href="#content-manager"><span class="nav-dot"></span>Content Manager</a>
+            </nav>
+
+            <div class="sidebar-actions">
+                <form action="{{ url_for('refresh_data') }}" method="POST" style="margin: 0;">
+                    <button type="submit" class="sidebar-btn refresh">Refresh Data</button>
+                </form>
+                <a class="sidebar-btn logout" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </aside>
+
+        <main class="main">
+            <header class="topbar">
+                <h1>Admin Dashboard</h1>
+                <p>Signed in as {{ username }} | Data file: {{ admin_data.source_file }} | Generated: {{ admin_data.generated_at }}</p>
+            </header>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% if admin_data.missing_files %}
+                <div class="flash error">Missing data files: {{ admin_data.missing_files | join(', ') }}</div>
+            {% endif %}
+
+            <section id="overview" data-section class="panel">
+                <h2>Overview</h2>
+                <p class="meta">Milestone 1 to Milestone 4 status at a glance.</p>
+
+                {% set volume_progress = 50 + admin_data.overview.volume_change_pct %}
+                {% if volume_progress < 0 %}{% set volume_progress = 0 %}{% endif %}
+                {% if volume_progress > 100 %}{% set volume_progress = 100 %}{% endif %}
+                {% set model_accuracy_value = admin_data.overview.model_accuracy if admin_data.overview.model_accuracy is not none else 0 %}
+
+                <div class="overview-grid">
+                    <div class="kpi">
+                        <div class="kpi-label">Total Articles</div>
+                        <div class="kpi-value">{{ admin_data.overview.total_articles }}</div>
+                        <div class="kpi-sub">Current records in admin source file</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Unique Sources</div>
+                        <div class="kpi-value">{{ admin_data.overview.unique_sources }}</div>
+                        <div class="kpi-sub">Distinct publishers tracked</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Dominant Topic</div>
+                        <div class="kpi-value" style="font-size: 26px;">{{ admin_data.overview.dominant_topic }}</div>
+                        <div class="kpi-sub">Most represented category today</div>
+                    </div>
+                    <div class="kpi">
+                        <div class="kpi-label">Pipeline Impact</div>
+                        <div class="kpi-value">{{ '%.1f'|format(admin_data.overview.impact_score) }}</div>
+                        <div class="kpi-sub">Level: {{ admin_data.overview.impact_level }}</div>
+                    </div>
+                </div>
+
+                <div class="overview-health">
+                    <article class="health-card">
+                        <h3>Pipeline Health Snapshot</h3>
+                        <div class="metric-bars">
+                            <div class="metric-row">
+                                <div class="metric-row-head">
+                                    <span>Positive Share</span>
+                                    <span>{{ '%.1f'|format(admin_data.overview.positive_share) }}%</span>
+                                </div>
+                                <div class="metric-track"><div class="metric-fill positive" style="width: {{ '%.1f'|format(admin_data.overview.positive_share) }}%;"></div></div>
+                            </div>
+
+                            <div class="metric-row">
+                                <div class="metric-row-head">
+                                    <span>Model Confidence</span>
+                                    <span>
+                                        {% if admin_data.overview.model_accuracy is not none %}
+                                            {{ '%.1f'|format(admin_data.overview.model_accuracy) }}%
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                <div class="metric-track"><div class="metric-fill confidence" style="width: {{ '%.1f'|format(model_accuracy_value) }}%;"></div></div>
+                            </div>
+
+                            <div class="metric-row">
+                                <div class="metric-row-head">
+                                    <span>Impact Score</span>
+                                    <span>{{ '%.1f'|format(admin_data.overview.impact_score) }}</span>
+                                </div>
+                                <div class="metric-track"><div class="metric-fill impact" style="width: {{ '%.1f'|format(admin_data.overview.impact_score) }}%;"></div></div>
+                            </div>
+
+                            <div class="metric-row">
+                                <div class="metric-row-head">
+                                    <span>Volume Momentum</span>
+                                    <span>{{ '%.1f'|format(admin_data.overview.volume_change_pct) }}%</span>
+                                </div>
+                                <div class="metric-track"><div class="metric-fill volume" style="width: {{ '%.1f'|format(volume_progress) }}%;"></div></div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="health-card">
+                        <h3>Hot Keywords</h3>
+                        <div class="quick-keywords">
+                            {% if admin_data.top_keywords %}
+                                {% for keyword in admin_data.top_keywords[:10] %}
+                                    <span class="keyword-chip">{{ keyword }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <p class="empty">No keywords yet.</p>
+                            {% endif %}
+                        </div>
+                    </article>
+                </div>
+
+                <div class="overview-charts">
+                    <div class="chart-card overview-main">
+                        <div class="chart-head">
+                            <h3>Interactive Performance Graph</h3>
+                            <div class="chart-switcher" id="overviewChartSwitcher">
+                                <button type="button" class="overview-switch-btn active" data-mode="trend">Trend Mix</button>
+                                <button type="button" class="overview-switch-btn" data-mode="keywords">Keyword Pulse</button>
+                                <button type="button" class="overview-switch-btn" data-mode="sentiment">Sentiment Pulse</button>
+                            </div>
+                        </div>
+                        <div class="canvas-wrap"><canvas id="overviewInteractiveChart"></canvas></div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3>Activity Graph</h3>
+                        <div class="canvas-wrap"><canvas id="overviewActivityChart"></canvas></div>
+                    </div>
+
+                    <div class="chart-card">
+                        <h3>Sentiment Bar</h3>
+                        <div class="canvas-wrap"><canvas id="overviewSentimentBarChart"></canvas></div>
+                    </div>
+
+                    <div class="chart-card overview-topic">
+                        <h3>Topic Momentum</h3>
+                        <div class="canvas-wrap"><canvas id="overviewTopicChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="datasets" data-section class="panel">
+                <h2>Dataset</h2>
+                <p class="meta">Milestone 1 to Milestone 4 data flow preview and checkpoints.</p>
+
+                <div class="milestone-grid">
+                    <article class="milestone-card">
+                        <span class="milestone-tag">Milestone 1</span>
+                        <h3>Data Collection and Cleaning</h3>
+                        <p class="meta">Raw and cleaned news snapshots.</p>
+                        {% for dataset in admin_data.milestone_1_datasets %}
+                            {% if dataset.exists and dataset.rows %}
+                                <details class="dataset-card">
+                                    <summary>
+                                        <div class="dataset-summary-head">
+                                            <h4>{{ dataset.display_name }}</h4>
+                                            <span class="dataset-open-label">Preview</span>
+                                        </div>
+                                        <p class="dataset-meta">{{ dataset.file_name }} | Rows: {{ dataset.total_rows }} | Columns: {{ dataset.columns|length }}</p>
+                                    </summary>
+                                    <div class="dataset-body">
+                                        {% set preview_cols = dataset.columns[:5] %}
+                                        <div class="table-wrap compact dataset-preview">
+                                            <table>
+                                                <thead>
+                                                    <tr>
+                                                        {% for column in preview_cols %}
+                                                            <th>{{ column }}</th>
+                                                        {% endfor %}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for row in dataset.rows[:2] %}
+                                                        <tr>
+                                                            {% for column in preview_cols %}
+                                                                <td>{{ row.get(column, '') }}</td>
+                                                            {% endfor %}
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </details>
+                            {% else %}
+                                <div class="dataset-card">
+                                    <h4>{{ dataset.display_name }}</h4>
+                                    <p class="dataset-meta">{{ dataset.file_name }} | Rows: {{ dataset.total_rows }}</p>
+                                    <p class="empty">Dataset not available yet.</p>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </article>
+
+                    <article class="milestone-card">
+                        <span class="milestone-tag">Milestone 2</span>
+                        <h3>NLP Processing and Sentiment</h3>
+                        <p class="meta">Processed text and sentiment-ready outputs.</p>
+                        {% for dataset in admin_data.milestone_2_datasets %}
+                            {% if dataset.exists and dataset.rows %}
+                                <details class="dataset-card">
+                                    <summary>
+                                        <div class="dataset-summary-head">
+                                            <h4>{{ dataset.display_name }}</h4>
+                                            <span class="dataset-open-label">Preview</span>
+                                        </div>
+                                        <p class="dataset-meta">{{ dataset.file_name }} | Rows: {{ dataset.total_rows }} | Columns: {{ dataset.columns|length }}</p>
+                                    </summary>
+                                    <div class="dataset-body">
+                                        {% set preview_cols = dataset.columns[:5] %}
+                                        <div class="table-wrap compact dataset-preview">
+                                            <table>
+                                                <thead>
+                                                    <tr>
+                                                        {% for column in preview_cols %}
+                                                            <th>{{ column }}</th>
+                                                        {% endfor %}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for row in dataset.rows[:2] %}
+                                                        <tr>
+                                                            {% for column in preview_cols %}
+                                                                <td>{{ row.get(column, '') }}</td>
+                                                            {% endfor %}
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </details>
+                            {% else %}
+                                <div class="dataset-card">
+                                    <h4>{{ dataset.display_name }}</h4>
+                                    <p class="dataset-meta">{{ dataset.file_name }} | Rows: {{ dataset.total_rows }}</p>
+                                    <p class="empty">Dataset not available yet.</p>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </article>
+
+                    <article class="milestone-card">
+                        <span class="milestone-tag">Milestone 3</span>
+                        <h3>Trend and Topic Intelligence</h3>
+                        <p class="meta">Advanced output with trend-focused features.</p>
+                        {% for dataset in admin_data.milestone_3_datasets %}
+                            {% if dataset.exists and dataset.rows %}
+                                <details class="dataset-card">
+                                    <summary>
+                                        <div class="dataset-summary-head">
+                                            <h4>{{ dataset.display_name }}</h4>
+                                            <span class="dataset-open-label">Preview</span>
+                                        </div>
+                                        <p class="dataset-meta">{{ dataset.file_name }} | Rows: {{ dataset.total_rows }} | Columns: {{ dataset.columns|length }}</p>
+                                    </summary>
+                                    <div class="dataset-body">
+                                        {% set preview_cols = dataset.columns[:5] %}
+                                        <div class="table-wrap compact dataset-preview">
+                                            <table>
+                                                <thead>
+                                                    <tr>
+                                                        {% for column in preview_cols %}
+                                                            <th>{{ column }}</th>
+                                                        {% endfor %}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for row in dataset.rows[:2] %}
+                                                        <tr>
+                                                            {% for column in preview_cols %}
+                                                                <td>{{ row.get(column, '') }}</td>
+                                                            {% endfor %}
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </details>
+                            {% else %}
+                                <div class="dataset-card">
+                                    <h4>{{ dataset.display_name }}</h4>
+                                    <p class="dataset-meta">{{ dataset.file_name }} | Rows: {{ dataset.total_rows }}</p>
+                                    <p class="empty">Milestone 3 output not generated yet.</p>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </article>
+
+                    <article class="milestone-card">
+                        <span class="milestone-tag">Milestone 4</span>
+                        <h3>Impact and Admin Control</h3>
+                        <p class="meta">Operational model and moderation readiness.</p>
+                        <div class="dataset-card">
+                            <h4>Model Quality</h4>
+                            <p class="dataset-meta">
+                                Accuracy:
+                                {% if admin_data.overview.model_accuracy is not none %}
+                                    {{ '%.1f'|format(admin_data.overview.model_accuracy) }}%
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                                |
+                                Level: {{ admin_data.overview.impact_level }}
+                            </p>
+                            <p class="meta">Actions available: refresh pipeline, edit records, delete records.</p>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="trending-keywords" data-section class="panel">
+                <h2>Trending Keywords</h2>
+                <p class="meta">Keyword patterns generated from processed text.</p>
+                {% if admin_data.top_keywords %}
+                    <div class="keywords-wrap">
+                        {% for keyword in admin_data.top_keywords %}
+                            <span class="keyword-chip">{{ keyword }}</span>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty">No keyword data available.</p>
+                {% endif %}
+
+                <div class="charts-grid" style="margin-top: 14px;">
+                    <div class="chart-card" style="grid-column: 1 / -1;">
+                        <h3>Keyword Frequency</h3>
+                        <div class="canvas-wrap"><canvas id="adminKeywordChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="word-cloud" data-section class="panel">
+                <h2>Word Cloud</h2>
+                <p class="meta">Visual spread of high-frequency terms.</p>
+                <div class="wordcloud-wrap">
+                    <canvas id="adminWordCloudCanvas" width="1400" height="560"></canvas>
+                </div>
+            </section>
+
+            <section id="topic-modeling" data-section class="panel">
+                <h2>Topic Modeling</h2>
+                <p class="meta">Trending topic movement over time and topic-level momentum.</p>
+
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Trending Topics Over Time</h3>
+                        <div class="canvas-wrap"><canvas id="adminTrendingLineChart"></canvas></div>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Topic Momentum</h3>
+                        {% if admin_data.trending_topics %}
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Topic</th>
+                                            <th>Mentions</th>
+                                            <th>Trend</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for topic in admin_data.trending_topics %}
+                                            <tr>
+                                                <td>{{ topic.title }}</td>
+                                                <td>{{ topic.mentions }}</td>
+                                                <td class="{{ 'trend-positive' if topic.trend_score >= 0 else 'trend-negative' }}">
+                                                    {{ '+' if topic.trend_score >= 0 else '' }}{{ topic.trend_score }}%
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="empty">No topic trend data available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <section id="sentiment-analysis" data-section class="panel">
+                <h2>Sentiment Analysis</h2>
+                <p class="meta">Distribution of Positive, Negative, Neutral, and Unknown labels.</p>
+                <div class="charts-grid">
+                    <div class="chart-card" style="grid-column: 1 / -1;">
+                        <h3>Sentiment Distribution</h3>
+                        <div class="canvas-wrap"><canvas id="adminSentimentChart"></canvas></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="impact-level" data-section class="panel">
+                <h2>Impact Level</h2>
+                <p class="meta">Milestone 4 operational impact combines sentiment health, volume trend, and model confidence.</p>
+
+                <div class="impact-grid">
+                    <div class="impact-score">
+                        <div class="score-value">{{ '%.1f'|format(admin_data.overview.impact_score) }}</div>
+                        <div class="score-label">{{ admin_data.overview.impact_level }} Impact</div>
+                    </div>
+
+                    <div class="impact-metrics">
+                        <div class="kpi">
+                            <div class="kpi-label">Positive Share</div>
+                            <div class="kpi-value">{{ '%.1f'|format(admin_data.overview.positive_share) }}%</div>
+                            <div class="kpi-sub">Positive sentiment ratio</div>
+                        </div>
+                        <div class="kpi">
+                            <div class="kpi-label">Volume Change</div>
+                            <div class="kpi-value">{{ '%.1f'|format(admin_data.overview.volume_change_pct) }}%</div>
+                            <div class="kpi-sub">Recent vs previous period</div>
+                        </div>
+                        <div class="kpi">
+                            <div class="kpi-label">Model Accuracy</div>
+                            <div class="kpi-value">
+                                {% if admin_data.overview.model_accuracy is not none %}
+                                    {{ '%.1f'|format(admin_data.overview.model_accuracy) }}%
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
+                            <div class="kpi-sub">Trained sentiment model performance</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="user-management" data-section class="panel">
+                <h2>User Management</h2>
+                <p class="meta">Admin can allocate new usernames/passwords and manage user access from one place.</p>
+
+                <div class="user-admin-grid">
+                    <div class="user-card">
+                        <h3>Create New User</h3>
+                        <form action="{{ url_for('admin_create_user') }}" method="POST" id="createUserForm">
+                            <div class="field-grid">
+                                <input type="text" name="username" id="newUsername" placeholder="Username" minlength="3" required>
+                                <input type="text" name="password" id="newPassword" placeholder="Password" minlength="6" required>
+                            </div>
+                            <div class="inline-actions">
+                                <button type="button" class="user-btn generate" id="generatePasswordBtn">Generate Password</button>
+                                <button type="submit" class="user-btn create">Create User</button>
+                            </div>
+                        </form>
+
+                        <div class="user-kpi-strip">
+                            <div class="user-kpi">
+                                <div class="k">Users</div>
+                                <div class="v">{{ admin_data.user_admin.total_users }}</div>
+                            </div>
+                            <div class="user-kpi">
+                                <div class="k">History Events</div>
+                                <div class="v">{{ admin_data.user_admin.history_events }}</div>
+                            </div>
+                            <div class="user-kpi">
+                                <div class="k">Success</div>
+                                <div class="v">{{ admin_data.user_admin.success_count }}</div>
+                            </div>
+                            <div class="user-kpi">
+                                <div class="k">Failed</div>
+                                <div class="v">{{ admin_data.user_admin.failed_count }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="user-card">
+                        <h3>Manage Registered Users</h3>
+                        <div class="search-wrap">
+                            <input type="text" id="userSearchInput" placeholder="Search by username...">
+                        </div>
+
+                        {% if admin_data.managed_users %}
+                            <div class="table-wrap" style="margin-top: 10px;">
+                                <table id="managedUsersTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Username</th>
+                                            <th>Created</th>
+                                            <th>Reset Password</th>
+                                            <th>Delete</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in admin_data.managed_users %}
+                                            <tr data-username="{{ user.username|lower }}">
+                                                <td>{{ user.id }}</td>
+                                                <td>{{ user.username }}</td>
+                                                <td>{{ user.created_at or 'N/A' }}</td>
+                                                <td>
+                                                    <form action="{{ url_for('admin_reset_user_password', user_id=user.id) }}" method="POST" style="display: flex; gap: 6px;">
+                                                        <input type="text" name="new_password" placeholder="New password" minlength="6" required style="min-width: 120px; border: 1px solid #cfe0ee; border-radius: 8px; padding: 6px 8px; font-size: 12px;">
+                                                        <button type="submit" class="user-btn reset">Reset</button>
+                                                    </form>
+                                                </td>
+                                                <td>
+                                                    <form action="{{ url_for('admin_delete_user', user_id=user.id) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Delete this user account?');">
+                                                        <button type="submit" class="user-btn delete">Delete</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="empty">No registered users found.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+            <section id="content-manager" data-section class="panel">
+                <h2>Content Manager</h2>
+                <p class="meta">Edit and delete records from {{ admin_data.source_file }}.</p>
+
+                {% if admin_data.articles %}
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Title</th>
+                                    <th>Source</th>
+                                    <th>Topic</th>
+                                    <th>Sentiment</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in admin_data.articles %}
+                                    <tr>
+                                        <td>{{ row.date }}</td>
+                                        <td>{{ row.title }}</td>
+                                        <td>{{ row.source }}</td>
+                                        <td>{{ row.topic }}</td>
+                                        <td class="sentiment-{{ row.sentiment|lower }}">{{ row.sentiment }}</td>
+                                        <td>
+                                            <div class="actions-cell">
+                                                <a class="mini-btn edit-btn" href="{{ url_for('admin_edit_article', row_index=row.row_index) }}">Edit</a>
+                                                <form action="{{ url_for('admin_delete_article', row_index=row.row_index) }}" method="POST" style="margin: 0;" onsubmit="return confirm('Delete this article?');">
+                                                    <button type="submit" class="mini-btn delete-btn">Delete</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="empty">No articles available to manage.</p>
+                {% endif %}
+            </section>
+        </main>
+    </div>
+
+    <script id="adminData" type="application/json">{{ admin_data | tojson }}</script>
+    <script>
+        const adminData = JSON.parse(document.getElementById('adminData').textContent);
+
+        const sentimentChart = adminData.sentiment_chart || { labels: [], values: [] };
+        const keywordChart = adminData.keyword_chart || { labels: [], values: [] };
+        const trendingChart = adminData.trending_line_chart || { labels: [], datasets: [] };
+        const trendingTopics = adminData.trending_topics || [];
+        const keywordCloudData = adminData.keyword_cloud || [];
+
+        const commonAxis = {
+            x: { ticks: { color: '#6b7280' }, grid: { color: '#eef2f7' } },
+            y: { beginAtZero: true, ticks: { color: '#6b7280' }, grid: { color: '#eef2f7' } }
+        };
+
+        const activityLabels = trendingChart.labels || [];
+        const activityValues = activityLabels.map((_, index) => {
+            return (trendingChart.datasets || []).reduce((total, dataset) => {
+                const point = Array.isArray(dataset.data) ? Number(dataset.data[index] || 0) : 0;
+                return total + (Number.isFinite(point) ? point : 0);
+            }, 0);
+        });
+
+        const topicLabels = trendingTopics.slice(0, 8).map((item) => item.title);
+        const topicMentions = trendingTopics.slice(0, 8).map((item) => Number(item.mentions || 0));
+        const topicTrends = trendingTopics.slice(0, 8).map((item) => Number(item.trend_score || 0));
+
+        const overviewInteractiveCanvas = document.getElementById('overviewInteractiveChart');
+        const overviewSwitchButtons = Array.from(document.querySelectorAll('#overviewChartSwitcher .overview-switch-btn'));
+        let overviewInteractiveChart = null;
+
+        const getOverviewInteractiveConfig = (mode) => {
+            if (mode === 'keywords') {
+                return {
+                    type: 'bar',
+                    data: {
+                        labels: keywordChart.labels,
+                        datasets: [{
+                            label: 'Keyword Mentions',
+                            data: keywordChart.values,
+                            backgroundColor: ['#2f68d8', '#4182f6', '#36a8ef', '#20a786', '#2da44e', '#be8f1e', '#d57c2a', '#b45ac8', '#de536a', '#6f87a7']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: commonAxis
+                    }
+                };
+            }
+
+            if (mode === 'sentiment') {
+                return {
+                    type: 'radar',
+                    data: {
+                        labels: sentimentChart.labels,
+                        datasets: [{
+                            label: 'Sentiment Pulse',
+                            data: sentimentChart.values,
+                            borderColor: '#145bc8',
+                            backgroundColor: 'rgba(20, 91, 200, 0.18)',
+                            pointBackgroundColor: '#145bc8',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                angleLines: { color: '#e4edf6' },
+                                grid: { color: '#e4edf6' },
+                                pointLabels: { color: '#4f6b86' },
+                                ticks: { display: false }
+                            }
+                        }
+                    }
+                };
+            }
+
+            return {
+                type: 'line',
+                data: {
+                    labels: trendingChart.labels,
+                    datasets: (trendingChart.datasets || []).map((dataset) => ({
+                        ...dataset,
+                        fill: false,
+                        pointRadius: 2,
+                        borderWidth: 2
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: commonAxis
+                }
+            };
+        };
+
+        const renderOverviewInteractiveChart = (mode) => {
+            if (!overviewInteractiveCanvas) {
+                return;
+            }
+            if (overviewInteractiveChart) {
+                overviewInteractiveChart.destroy();
+            }
+            overviewInteractiveChart = new Chart(overviewInteractiveCanvas, getOverviewInteractiveConfig(mode));
+        };
+
+        renderOverviewInteractiveChart('trend');
+
+        overviewSwitchButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                overviewSwitchButtons.forEach((item) => item.classList.remove('active'));
+                button.classList.add('active');
+                renderOverviewInteractiveChart(button.getAttribute('data-mode') || 'trend');
+            });
+        });
+
+        const overviewActivityCanvas = document.getElementById('overviewActivityChart');
+        if (overviewActivityCanvas) {
+            new Chart(overviewActivityCanvas, {
+                type: 'line',
+                data: {
+                    labels: activityLabels,
+                    datasets: [{
+                        label: 'Daily Activity',
+                        data: activityValues,
+                        borderColor: '#145bc8',
+                        backgroundColor: 'rgba(20, 91, 200, 0.16)',
+                        fill: true,
+                        tension: 0.28,
+                        pointRadius: 2,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: commonAxis
+                }
+            });
+        }
+
+        const overviewSentimentBarCanvas = document.getElementById('overviewSentimentBarChart');
+        if (overviewSentimentBarCanvas) {
+            new Chart(overviewSentimentBarCanvas, {
+                type: 'bar',
+                data: {
+                    labels: sentimentChart.labels,
+                    datasets: [{
+                        label: 'Articles',
+                        data: sentimentChart.values,
+                        backgroundColor: ['#22c55e', '#ef4444', '#f59e0b', '#9ca3af']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: commonAxis
+                }
+            });
+        }
+
+        const overviewTopicCanvas = document.getElementById('overviewTopicChart');
+        if (overviewTopicCanvas) {
+            new Chart(overviewTopicCanvas, {
+                data: {
+                    labels: topicLabels,
+                    datasets: [{
+                        type: 'bar',
+                        label: 'Mentions',
+                        data: topicMentions,
+                        backgroundColor: 'rgba(47, 104, 216, 0.72)',
+                        borderRadius: 8,
+                        yAxisID: 'y'
+                    }, {
+                        type: 'line',
+                        label: 'Trend %',
+                        data: topicTrends,
+                        borderColor: '#0ea5a0',
+                        backgroundColor: 'transparent',
+                        pointBackgroundColor: '#0ea5a0',
+                        tension: 0.25,
+                        borderWidth: 2,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#6b7280' },
+                            grid: { color: '#eef2f7' }
+                        },
+                        y1: {
+                            position: 'right',
+                            ticks: { color: '#6b7280' },
+                            grid: { drawOnChartArea: false }
+                        },
+                        x: {
+                            ticks: { color: '#6b7280' },
+                            grid: { color: '#eef2f7' }
+                        }
+                    }
+                }
+            });
+        }
+
+        new Chart(document.getElementById('adminSentimentChart'), {
+            type: 'pie',
+            data: {
+                labels: sentimentChart.labels,
+                datasets: [{
+                    data: sentimentChart.values,
+                    backgroundColor: ['#22c55e', '#ef4444', '#f59e0b', '#9ca3af']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        new Chart(document.getElementById('adminKeywordChart'), {
+            type: 'bar',
+            data: {
+                labels: keywordChart.labels,
+                datasets: [{
+                    label: 'Mentions',
+                    data: keywordChart.values,
+                    backgroundColor: ['#2f68d8', '#4182f6', '#36a8ef', '#20a786', '#2da44e', '#be8f1e', '#d57c2a', '#b45ac8', '#de536a', '#6f87a7']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: commonAxis
+            }
+        });
+
+        new Chart(document.getElementById('adminTrendingLineChart'), {
+            type: 'line',
+            data: {
+                labels: trendingChart.labels,
+                datasets: (trendingChart.datasets || []).map(dataset => ({
+                    ...dataset,
+                    fill: false,
+                    pointRadius: 2,
+                    borderWidth: 2
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: commonAxis
+            }
+        });
+
+        const cloudCanvas = document.getElementById('adminWordCloudCanvas');
+        if (cloudCanvas && window.WordCloud && keywordCloudData.length) {
+            WordCloud(cloudCanvas, {
+                list: keywordCloudData,
+                gridSize: Math.max(10, Math.round(cloudCanvas.width / 90)),
+                weightFactor: (size) => Math.max(13, size * 2.7),
+                fontFamily: 'Sora, sans-serif',
+                color: () => {
+                    const palette = ['#0f5ac7', '#0f766e', '#b45309', '#c62f2f', '#1e3a5f', '#226d9b'];
+                    return palette[Math.floor(Math.random() * palette.length)];
+                },
+                backgroundColor: '#f4fbff',
+                rotateRatio: 0.22,
+                minRotation: -0.6,
+                maxRotation: 0.6,
+                drawOutOfBound: false,
+            });
+        }
+
+        const navToggle = document.getElementById('navToggle');
+        if (navToggle) {
+            navToggle.addEventListener('click', () => {
+                document.body.classList.toggle('sidebar-open');
+            });
+        }
+
+        const navLinks = Array.from(document.querySelectorAll('.nav-link'));
+        const sections = Array.from(document.querySelectorAll('section[data-section]'));
+
+        navLinks.forEach((link) => {
+            link.addEventListener('click', () => {
+                navLinks.forEach((item) => item.classList.remove('active'));
+                link.classList.add('active');
+                if (window.innerWidth <= 980) {
+                    document.body.classList.remove('sidebar-open');
+                }
+            });
+        });
+
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (!entry.isIntersecting) {
+                    return;
+                }
+
+                const id = entry.target.getAttribute('id');
+                navLinks.forEach((link) => {
+                    const target = link.getAttribute('href').replace('#', '');
+                    link.classList.toggle('active', target === id);
+                });
+            });
+        }, {
+            root: null,
+            rootMargin: '-30% 0px -55% 0px',
+            threshold: 0
+        });
+
+        sections.forEach((section) => sectionObserver.observe(section));
+
+        const generatePasswordBtn = document.getElementById('generatePasswordBtn');
+        const newPasswordInput = document.getElementById('newPassword');
+        if (generatePasswordBtn && newPasswordInput) {
+            generatePasswordBtn.addEventListener('click', () => {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%';
+                let generated = '';
+                for (let i = 0; i < 12; i += 1) {
+                    generated += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                newPasswordInput.value = generated;
+            });
+        }
+
+        const userSearchInput = document.getElementById('userSearchInput');
+        const managedUsersTable = document.getElementById('managedUsersTable');
+        if (userSearchInput && managedUsersTable) {
+            const userRows = Array.from(managedUsersTable.querySelectorAll('tbody tr'));
+            userSearchInput.addEventListener('input', () => {
+                const query = userSearchInput.value.trim().toLowerCase();
+                userRows.forEach((row) => {
+                    const username = row.getAttribute('data-username') || '';
+                    row.classList.toggle('hidden-row', query && !username.includes(query));
+                });
+            });
+        }
+
+    </script>
+</body>
+</html>

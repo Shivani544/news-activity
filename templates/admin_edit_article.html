@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Article - NewsPulse Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+
+        :root {
+            --bg-main: #f5f8fc;
+            --bg-accent: #e7eff7;
+            --card: #ffffff;
+            --text-main: #132238;
+            --text-muted: #4f6782;
+            --line: #d8e4ef;
+            --primary: #0f5ac7;
+            --neutral: #637588;
+            --shadow: 0 12px 26px rgba(11, 44, 83, 0.08);
+        }
+
+        body {
+            margin: 0;
+            padding: 26px;
+            font-family: 'Sora', sans-serif;
+            background:
+                radial-gradient(circle at 90% 10%, rgba(15, 90, 199, 0.14), transparent 28%),
+                radial-gradient(circle at 8% 88%, rgba(17, 149, 122, 0.12), transparent 30%),
+                linear-gradient(155deg, var(--bg-main) 0%, var(--bg-accent) 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .wrapper {
+            max-width: 860px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.86);
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(8px);
+            animation: riseIn 0.55s ease both;
+        }
+
+        h2 {
+            margin: 0 0 6px;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+        }
+
+        .meta {
+            margin: 0 0 18px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 700;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: #2a4f75;
+            letter-spacing: 0.02em;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            border: 1px solid #cfe0ee;
+            border-radius: 10px;
+            padding: 10px 11px;
+            font-size: 14px;
+            font-family: 'Sora', sans-serif;
+            color: #153453;
+            background: #fbfdff;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            border-color: #72a7db;
+            box-shadow: 0 0 0 3px rgba(114, 167, 219, 0.2);
+            outline: none;
+        }
+
+        textarea {
+            min-height: 140px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            text-decoration: none;
+            cursor: pointer;
+            color: #fff;
+            display: inline-flex;
+            align-items: center;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            opacity: 0.95;
+        }
+
+        .btn-save { background: linear-gradient(135deg, var(--primary) 0%, #0d77ba 100%); }
+        .btn-back { background: linear-gradient(135deg, var(--neutral) 0%, #475a6e 100%); }
+
+        @keyframes riseIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <h2>Edit News Article</h2>
+        <p class="meta">Data file: {{ source_file }} | Row index: {{ article.row_index }}</p>
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input id="title" name="title" type="text" value="{{ article.title }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description">{{ article.description }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="source">Source</label>
+                <input id="source" name="source" type="text" value="{{ article.source }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="date">Date (ISO format)</label>
+                <input id="date" name="date" type="text" value="{{ article.date }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="sentiment">Sentiment</label>
+                <select id="sentiment" name="sentiment" required>
+                    {% set current_sentiment = article.sentiment|lower %}
+                    <option value="Positive" {{ 'selected' if current_sentiment == 'positive' else '' }}>Positive</option>
+                    <option value="Negative" {{ 'selected' if current_sentiment == 'negative' else '' }}>Negative</option>
+                    <option value="Neutral" {{ 'selected' if current_sentiment == 'neutral' else '' }}>Neutral</option>
+                    <option value="Unknown" {{ 'selected' if current_sentiment == 'unknown' else '' }}>Unknown</option>
+                </select>
+            </div>
+
+            <div class="actions">
+                <button type="submit" class="btn btn-save">Save Changes</button>
+                <a href="{{ url_for('admin_dashboard') }}#content-manager" class="btn btn-back">Back to Admin Dashboard</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
